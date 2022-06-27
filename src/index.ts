@@ -13,6 +13,8 @@ $(() => {
     class BreathingRoom {
         private width: number = $('#breathingRoom').width();
         private height: number = $('#breathingRoom').height();
+        private top: number;
+        private bottom: number;
         private canvas = $('#canvas')[0] as HTMLCanvasElement;
         private direction = 'up';
         private ctx: CanvasRenderingContext2D;
@@ -22,10 +24,11 @@ $(() => {
         private fps = 0;
         private countFrames = false;
         private rate: number;
+        private pause: boolean = false;
 
         private colors = {
             blue: '#2a385b',
-            yello: '#8b7f47',
+            yellow: '#8b7f47',
             lightBlue: '#9c9eb5',
             offWhite: '#faf3eb'
         };
@@ -76,6 +79,8 @@ $(() => {
             }
 
             this.radius = Math.max(this.height * 0.1, 30);
+            this.top = this.radius * 1.9;
+            this.bottom = (this.height - this.radius) * 0.9;
 
             this.canvas.width = this.width;
             this.canvas.height = this.height;
@@ -86,30 +91,73 @@ $(() => {
         }
 
         private draw() {
-            this.ctx.clearRect(0, 0, this.width, this.height);
+            if (!this.isRunning()) {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                this.drawLines();
+                this.drawCircle();
+                window.requestAnimationFrame(() => this.draw());
+                return;
+            }
 
-            if (this.isRunning()) {
-                if (this.direction === 'up') {
-                    this.position += this.rate / this.params.inhale;
-                } else {
-                    this.position -= this.rate / this.params.exhale;
+            this.setPosition();
+
+            this.ctx.clearRect(0, 0, this.width, this.height);
+            this.drawLines();
+            this.drawCircle();
+
+            window.requestAnimationFrame(() => this.draw());
+        }
+
+        private setPosition() {
+            if (this.pause) { return; }
+
+            if (this.direction === 'down') {
+                this.position += this.rate / this.params.exhale;
+            } else {
+                this.position -= this.rate / this.params.inhale;
+            }
+
+            if (this.position >= this.bottom) {
+                this.direction = 'up';
+                if (this.params.holdIn) {
+                    this.pause = true;
+                    setTimeout(() => {
+                        this.pause = false;
+                    }, this.params.holdIn * 1000);
                 }
             }
 
-            this.ctx.beginPath();
-
-            if (this.position >= this.height - this.radius) {
+            if (this.position <= this.top) {
                 this.direction = 'down';
+                if (this.params.holdOut) {
+                    this.pause = true;
+                    setTimeout(() => {
+                        this.pause = false;
+                    }, this.params.holdOut * 1000);
+                }
             }
+        }
 
-            if (this.position <= this.radius) {
-                this.direction = 'up';
-            }
-
+        private drawCircle() {
+            this.ctx.beginPath();
             this.ctx.arc(this.center.x, this.position, this.radius, 0, Math.PI * 2, false);
             this.ctx.fillStyle = this.colors.blue;
             this.ctx.fill();
-            window.requestAnimationFrame(() => this.draw());
+        }
+
+        private drawLines() {
+            return;
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, this.height);
+            this.ctx.lineTo(this.center.x, this.position);
+            this.ctx.stroke();
+            this.ctx.closePath();
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.center.x, this.position);
+            this.ctx.lineTo(this.width, this.height);
+            this.ctx.stroke();
+            this.ctx.closePath();
         }
 
         private isRunning() {
