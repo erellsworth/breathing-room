@@ -11,8 +11,8 @@ type Param = 'inhale' | 'exhale' | 'holdIn' | 'holdOut';
 $(() => {
 
     class BreathingRoom {
-        private width: number = $('#breathingRoom').width();
-        private height: number = $('#breathingRoom').height();
+        private width: number;
+        private height: number;
         private top: number;
         private bottom: number;
         private canvas = $('#canvas')[0] as HTMLCanvasElement;
@@ -34,8 +34,8 @@ $(() => {
         };
 
         private params = {
-            inhale: 0,
-            exhale: 0,
+            inhale: 3,
+            exhale: 4,
             holdIn: 0,
             holdOut: 0
         };
@@ -43,7 +43,7 @@ $(() => {
         constructor() {
 
             const fgColor = this.colors.blue;
-            const bgColor = this.colors.lightBlue;
+            const bgColor = this.colors.offWhite;
 
             Object.keys(this.params).forEach((key: Param) => {
                 const selector = `#${key}Control`;
@@ -59,6 +59,8 @@ $(() => {
                         this.params[key] = value;
                     }
                 });
+
+                this.params[key] = parseInt($(selector).val() as string);
             });
 
 
@@ -68,17 +70,15 @@ $(() => {
         }
 
         private async prepareCanvas() {
-            await this.setFps();
-
-            this.width = $('#breathingRoom').width();
-            this.height = $('#breathingRoom').height();
+            this.width = $('#canvas').width();
+            this.height = $('#canvas').height();
 
             this.center = {
                 x: this.width / 2,
                 y: this.height / 2
             }
 
-            this.radius = Math.max(this.height * 0.1, 30);
+            this.radius = Math.max(this.height * 0.01, 30);
             this.top = this.radius * 1.9;
             this.bottom = (this.height - this.radius) * 0.9;
 
@@ -86,6 +86,8 @@ $(() => {
             this.canvas.height = this.height;
 
             this.position = this.center.y;
+
+            await this.setFps();
             this.rate = (this.height - this.radius) / this.fps;
             this.draw();
         }
@@ -119,21 +121,21 @@ $(() => {
 
             if (this.position >= this.bottom) {
                 this.direction = 'up';
-                if (this.params.holdIn) {
-                    this.pause = true;
-                    setTimeout(() => {
-                        this.pause = false;
-                    }, this.params.holdIn * 1000);
-                }
-            }
-
-            if (this.position <= this.top) {
-                this.direction = 'down';
                 if (this.params.holdOut) {
                     this.pause = true;
                     setTimeout(() => {
                         this.pause = false;
                     }, this.params.holdOut * 1000);
+                }
+            }
+
+            if (this.position <= this.top) {
+                this.direction = 'down';
+                if (this.params.holdIn) {
+                    this.pause = true;
+                    setTimeout(() => {
+                        this.pause = false;
+                    }, this.params.holdIn * 1000);
                 }
             }
         }
@@ -146,9 +148,25 @@ $(() => {
         }
 
         private drawLines() {
-            return;
             this.ctx.beginPath();
-            this.ctx.moveTo(0, this.height);
+            this.ctx.moveTo(0, this.top - this.radius);
+            this.ctx.lineTo(this.width, this.top - this.radius);
+            this.ctx.stroke();
+            this.ctx.closePath();
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, this.bottom + this.radius);
+            this.ctx.lineTo(this.width, this.bottom + this.radius);
+            this.ctx.stroke();
+            this.ctx.closePath();
+
+            this.ctx.textAlign = 'center';
+            this.ctx.font = '16px serif';
+            this.ctx.fillText('Inhale', this.center.x, 15);
+            this.ctx.fillText('Exhale', this.center.x, this.bottom + this.radius + 15);
+
+            return;
+
             this.ctx.lineTo(this.center.x, this.position);
             this.ctx.stroke();
             this.ctx.closePath();
@@ -172,6 +190,10 @@ $(() => {
         }
 
         private setFps(): Promise<number> {
+            this.ctx.textAlign = 'center';
+            this.ctx.font = '24px serif';
+            this.ctx.fillText('Contemplating Spacetime...', this.center.x, this.center.y);
+
             return new Promise((resolve, reject) => {
                 this.countFrames = true;
                 this.frameCheck();
