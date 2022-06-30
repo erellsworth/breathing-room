@@ -63,13 +63,16 @@ $(() => {
                 this.params[key] = parseInt($(selector).val() as string);
             });
 
+            $(window).on('resize', () => {
+                this.prepareCanvas(false);
+            });
 
             this.ctx = this.canvas.getContext('2d');
 
             this.prepareCanvas();
         }
 
-        private async prepareCanvas() {
+        private async prepareCanvas(draw: boolean = true) {
             this.width = $('#canvas').width();
             this.height = $('#canvas').height();
 
@@ -88,8 +91,11 @@ $(() => {
             this.position = this.center.y;
 
             await this.setFps();
+
             this.rate = (this.height - this.radius) / this.fps;
-            this.draw();
+            if (draw) {
+                this.draw();
+            }
         }
 
         private draw() {
@@ -190,11 +196,15 @@ $(() => {
         }
 
         private setFps(): Promise<number> {
-            this.ctx.textAlign = 'center';
-            this.ctx.font = '24px serif';
-            this.ctx.fillText('Contemplating Spacetime...', this.center.x, this.center.y);
-
             return new Promise((resolve, reject) => {
+                if (this.fps) {
+                    resolve(this.fps);
+                    return;
+                };
+
+                this.ctx.textAlign = 'center';
+                this.ctx.font = '24px serif';
+                this.ctx.fillText('Contemplating Spacetime...', this.center.x, this.center.y);
                 this.countFrames = true;
                 this.frameCheck();
 
