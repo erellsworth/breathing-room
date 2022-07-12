@@ -55,6 +55,8 @@ $(() => {
                     max: 10,
                     angleArc: 180,
                     angleOffset: -90,
+                    width: 100,
+                    height: 75,
                     release: (value: number) => {
                         this.params[key] = value;
                     }
@@ -171,17 +173,6 @@ $(() => {
             this.ctx.fillText('Inhale', this.center.x, 15);
             this.ctx.fillText('Exhale', this.center.x, this.bottom + this.radius + 15);
 
-            return;
-
-            this.ctx.lineTo(this.center.x, this.position);
-            this.ctx.stroke();
-            this.ctx.closePath();
-
-            this.ctx.beginPath();
-            this.ctx.moveTo(this.center.x, this.position);
-            this.ctx.lineTo(this.width, this.height);
-            this.ctx.stroke();
-            this.ctx.closePath();
         }
 
         private isRunning() {
