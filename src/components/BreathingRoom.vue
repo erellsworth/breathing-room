@@ -1,6 +1,42 @@
+<template>
+  <div id="breathingRoom">
+    <div class="controls">
+      <div class="control">
+        <h5>Inhale:</h5>
+        <Knob v-model="params.inhale" :max="10" />
+      </div>
+      <div class="control">
+        <h5>Hold in:</h5>
+        <Knob v-model="params.holdIn" :max="20" />
+      </div>
+    </div>
+    <div class="controls">
+      <div class="control">
+        <h5>Exhale:</h5>
+        <Knob v-model="params.exhale" :max="10" />
+      </div>
+      <div class="control">
+        <h5>Hold out:</h5>
+        <Knob v-model="params.holdOut" :max="20" />
+      </div>
+    </div>
+    <div class="controls">
+      <ToggleButton
+        v-model="isRunning"
+        onIcon="pi pi-pause"
+        offIcon="pi pi-play"
+      />
+    </div>
+    <canvas ref="room" />
+  </div>
+</template>
+
 <script lang="ts">
 import { defineComponent } from "vue";
-import Button from "primevue/button";
+import ToggleButton from "primevue/togglebutton";
+import Knob from "primevue/knob";
+
+const components = { ToggleButton, Knob };
 
 interface Data {
   canvas?: HTMLCanvasElement;
@@ -89,6 +125,14 @@ export default defineComponent({
         await this.setFps();
       }
 
+      if (!this.isRunning) {
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        this.drawLines();
+        this.drawCircle();
+        window.requestAnimationFrame(() => this.draw());
+        return;
+      }
+
       this.setPosition();
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -145,6 +189,7 @@ export default defineComponent({
 
       if (this.position >= this.bottom) {
         this.direction = "up";
+
         if (this.params.holdOut) {
           this.pause = true;
           setTimeout(() => {
@@ -195,13 +240,7 @@ export default defineComponent({
       });
     },
   },
-  components: { Button },
+  components,
 });
 </script>
-
-<template>
-  <div id="breathingRoom">
-    <canvas ref="room" />
-  </div>
-</template>
 
